@@ -6,12 +6,6 @@ open System.Net
 open System.IO
 open System.Text
 
-// Server configurations
-let addr:string = IPAddress.Any.ToString()
-let port:int = 8081
-let hostFolder:string = @"\wwwroot"
-let message404:string = @"404 | File Not Found"
-
 // Map the content path to relative or absolute path based on the hostFolder 
 let mapContentFolder folderPath:string =
     match folderPath with
@@ -47,7 +41,7 @@ let byteResponse (req:HttpListenerRequest) =
     | _ -> raise (new FileNotFoundException())
    
 // Returns the MIME Type for different contents
-let mapMIMEType (req:HttpListenerRequest) =
+let mapMIMEType (req:HttpListenerRequest):string =
     let extension = Path.GetExtension(req.RawUrl)
     // Add new MIME Types here
     match extension with
@@ -56,24 +50,34 @@ let mapMIMEType (req:HttpListenerRequest) =
     | ".ico" -> "image/x-icon"
     | _ -> "text/html"
 
-// Encodes and returns the content
-listener addr port (fun req resp ->
-    async {
-        try
-            let mime = mapMIMEType req
-            resp.ContentType <- mime
-            // if contains mime type of text, encodes in UTF-8
-            let byteContent = byteResponse req
-            resp.OutputStream.Write(byteContent, 0, byteContent.Length)
-        with 
-        | :? FileNotFoundException -> 
-            let notFoundMessage = Encoding.UTF8.GetBytes(message404);
-            resp.ContentType <- "text/html"
-            resp.OutputStream.Write(notFoundMessage, 0, notFoundMessage.Length); |> ignore
+//[<EntryPoint>]
+let main:int =
+    // Server configurations
+    let addr:string = IPAddress.Any.ToString()
+    let port:int = 8088
+    let hostFolder:string = @"\wwwroot"
+    let message404:string = @"404 | File Not Found"
 
-        resp.OutputStream.Close()
-    })
+    // Encodes and returns the content
+    listener addr port (fun req resp ->
+        async {
+            try
+                resp.ContentType <- mapMIMEType req
+                // if contains mime type of text, encodes in UTF-8
+                let byteContent = byteResponse req
+                resp.OutputStream.Write(byteContent, 0, byteContent.Length)
+            with 
+            | :? FileNotFoundException -> 
+                let notFoundMessage = Encoding.UTF8.GetBytes(message404);
+                resp.ContentType <- "text/html"
+                resp.OutputStream.Write(notFoundMessage, 0, notFoundMessage.Length); |> ignore
 
-// Wait to quit
-printfn "Press any key to exit"
-Console.ReadKey();
+            resp.OutputStream.Close()
+        })
+
+    // Wait to quit
+    printfn "Press any key to exit"
+    Console.ReadKey() |> ignore
+    0
+
+main
