@@ -12,12 +12,15 @@ let listen addr port =
     async {
         while true do
             let client = tcpListener.AcceptTcpClient()
-            printf "Client %s connected" (client.Client.LocalEndPoint.ToString())
-            let bytes:byte[] = Array.create 255 (new byte());
+            printfn "Client %s connected" (client.Client.LocalEndPoint.ToString())
 
-            while not (client.GetStream().Read(bytes, 0, bytes.Length).Equals(0)) do
-                Console.ForegroundColor <- ConsoleColor.Cyan;
-                printfn "%s" (System.Text.Encoding.UTF8.GetString(bytes))
+            let buffer = Array.zeroCreate<byte> 4096
+            
+            while not (client.GetStream().Read(buffer, 0, buffer.Length).Equals(0)) do
+                let data = System.Text.Encoding.UTF8.GetString(buffer)
+                Console.ForegroundColor <- ConsoleColor.Cyan
+
+                if data.Trim().Length > 0 then printfn "%s" (data.Trim())
 
     } |> Async.Start
 

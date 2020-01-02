@@ -31,7 +31,7 @@ let listener addr port (handler:(HttpListenerRequest->HttpListenerResponse->Asyn
     } |> Async.Start
 
 // Fetch the response content as byte[] or Throw Not Found Exception
-let byteResponse (req:HttpListenerRequest) =
+let byteResponse (req:HttpListenerRequest) (hostFolder:string) =
 
     let file = sprintf "%s/%s" (mapContentFolder hostFolder) req.RawUrl
     printfn "Requested file : '%s'" file
@@ -64,7 +64,7 @@ let main:int =
             try
                 resp.ContentType <- mapMIMEType req
                 // if contains mime type of text, encodes in UTF-8
-                let byteContent = byteResponse req
+                let byteContent = byteResponse req hostFolder
                 resp.OutputStream.Write(byteContent, 0, byteContent.Length)
             with 
             | :? FileNotFoundException -> 

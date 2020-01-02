@@ -3,9 +3,6 @@ open System.Net
 open System.Net.Sockets
 open System.Text
 
-// Break exception to stop while loop on console
-exception BreakException
-
 let listenForNewMessages (stream:NetworkStream) =
     // Create Async Listener for new messages
     async {
@@ -35,15 +32,14 @@ let main:int =
     
     // Message Loop
     while continueToLoop do
-        try
-            match Console.ReadLine() with
-            | @"\q" -> raise(BreakException)
-            | "" -> ()
-            | _ -> sendMessage (Console.ReadLine(), netStream)
-        with
-        | BreakException -> netStream.Close(); client.Close(); continueToLoop <- false;
+        match Console.ReadLine() with
+        | @"\q" -> continueToLoop <- false;
+        | "" -> ()
+        | _ -> sendMessage (Console.ReadLine(), netStream)
 
+    netStream.Close() 
+    client.Close()
     printfn "Shutting down the  TCP Server at: %s:%i" addr port
     0
-    // Wait to quit
+
 main
